@@ -17,7 +17,12 @@
  * - Retarded Light-Cone Wavefronts (t_ret = t - r/c) illustrating causal signal propagation
  */
 
-import { QUADBIT_EIGENSPACES, QuadbitDefinition, QuadbitParticle } from './quadbit_particle_physics';
+import {
+  BeConstructState,
+  QUADBIT_EIGENSPACES,
+  QuadbitDefinition,
+  QuadbitParticle,
+} from './quadbit_particle_physics';
 
 export interface Camera3D {
   // Spherical orbital coordinates
@@ -64,6 +69,8 @@ export interface Particle3D {
   properTimeTau: number;// dilated proper time
   pos3D: [number, number, number]; // [x, y, z] in ASU
   trail: Array<[number, number, number]>;
+  vr?: number;          // radial velocity during genesis eruption
+  targetR?: number;     // curated target orbital radius (equilibrium)
 }
 
 export interface Wavefront3D {
@@ -90,9 +97,79 @@ export class MoMBHStar3DProjectionEngine {
   private timeRate: number = 1.0;
   private isPaused: boolean = false;
   private nextWavefrontTimer: number = 0;
+  private beConstruct: BeConstructState = {
+    isSpawned: true,
+    phase: 'mature',
+    maturityProgress: 1.0,
+    curationParameters: {
+      dampingFactor: 1.0,
+      targetRadius: 5.4,
+      confinementField: 1.0,
+      resonanceHarmony: 1.0,
+    },
+    lastAction: 'Manifold in mature equilibrium [1 ≡ 1]',
+  };
 
   constructor() {
     this.initParticles();
+  }
+
+  /**
+   * Resets and triggers 3D Genesis eruption:
+   * Spawns Be <> construct at t=0 and initiates outward expansion and curation.
+   */
+  public triggerGenesis() {
+    this.coordinateTimeT = 0;
+    this.beConstruct = {
+      isSpawned: true,
+      phase: 'nascent',
+      maturityProgress: 0.0,
+      curationParameters: {
+        dampingFactor: 0.25,
+        targetRadius: METRIC_SCALE_INVARIANTS.rISCOASU,
+        confinementField: 1.2,
+        resonanceHarmony: 0.05,
+      },
+      lastAction: 'Be <> instantiated at t=0; initiating 3D curation',
+    };
+
+    // Collapse particles to the horizon throat with explosive radial kicks
+    this.particles = [];
+    for (let state = 0; state < 16; state++) {
+      const def = QUADBIT_EIGENSPACES[state];
+      const targetR = 5.4 + (state / 15) * 12.0;
+      const rStart = METRIC_SCALE_INVARIANTS.rsASU + 0.03 + Math.random() * 0.08;
+      const inclination = ((state % 5) - 2) * 0.12;
+      const ascNode = (state * Math.PI) / 8;
+      const theta = (state * 1.618) % (Math.PI * 2);
+      const pos = this.computeOrbitPos(rStart, theta, inclination, ascNode);
+
+      this.particles.push({
+        id: state,
+        qbitState: state,
+        def,
+        r: rStart,
+        theta,
+        inclination,
+        ascNode,
+        vOrbit: 3.5, // High initial rotation
+        properTimeTau: 0,
+        pos3D: pos,
+        trail: [pos],
+        vr: 2.2 + Math.random() * 1.5, // Outward explosion velocity
+        targetR,
+      });
+    }
+
+    // Spawn primordial inflation wavefront
+    this.wavefronts = [
+      {
+        id: Math.random(),
+        r: METRIC_SCALE_INVARIANTS.rsASU,
+        tBirth: 0,
+        amplitude: 2.5,
+      },
+    ];
   }
 
   public initParticles() {
@@ -148,9 +225,52 @@ export class MoMBHStar3DProjectionEngine {
     const scaledDt = dt * this.timeRate;
     this.coordinateTimeT += scaledDt;
 
+    // Advance Be <> curation to maturity
+    if (this.beConstruct.isSpawned && this.beConstruct.phase !== 'mature') {
+      this.beConstruct.maturityProgress = Math.min(1.0, this.beConstruct.maturityProgress + scaledDt * 0.25);
+
+      if (this.beConstruct.maturityProgress >= 1.0) {
+        this.beConstruct.phase = 'mature';
+        this.beConstruct.curationParameters.dampingFactor = 1.0;
+        this.beConstruct.curationParameters.resonanceHarmony = 1.0;
+        this.beConstruct.lastAction = 'Be <> curated 3D manifold to maturity [1 ≡ 1 LOCKED]';
+      } else if (this.beConstruct.maturityProgress > 0.15) {
+        this.beConstruct.phase = 'curating';
+        this.beConstruct.curationParameters.dampingFactor = 0.25 + this.beConstruct.maturityProgress * 0.75;
+        this.beConstruct.curationParameters.resonanceHarmony = this.beConstruct.maturityProgress;
+        this.beConstruct.lastAction = `Be <> curating 3D quadbit expansion: ${(this.beConstruct.maturityProgress * 100).toFixed(0)}% to maturity`;
+      }
+    }
+
+    const curationProgress = this.beConstruct.maturityProgress;
+    const isCurating = this.beConstruct.phase !== 'mature';
+
     // Update particles along 3D orbits
     for (let i = 0; i < this.particles.length; i++) {
       const p = this.particles[i];
+
+      // If curating genesis expansion, damp radial explosion and guide to equilibrium target radius
+      if (isCurating && p.vr !== undefined) {
+        p.r += p.vr * scaledDt;
+
+        // Aerodynamic and gravitational deceleration
+        p.vr *= (1.0 - scaledDt * (0.8 + curationProgress * 1.8));
+
+        // Restoring force towards target Keplerian radius
+        const targetR = p.targetR ?? (5.4 + (i / 15) * 12.0);
+        const rDiff = targetR - p.r;
+        p.vr += rDiff * scaledDt * curationProgress * 2.2;
+
+        // When almost mature, settle neatly into stable radius
+        if (curationProgress >= 0.98) {
+          p.r = targetR;
+          p.vr = 0;
+        }
+
+        // Dynamically recalculate Keplerian orbital speed
+        p.vOrbit = Math.sqrt(1.80 / (Math.max(METRIC_SCALE_INVARIANTS.rsASU * 1.05, p.r * p.r * p.r))) * 1.8;
+      }
+
       p.theta += p.vOrbit * scaledDt;
       if (p.theta > Math.PI * 2) p.theta -= Math.PI * 2;
 
@@ -274,6 +394,13 @@ export class MoMBHStar3DProjectionEngine {
 
   public getTimeRate(): number {
     return this.timeRate;
+  }
+
+  public getBeConstruct(): BeConstructState {
+    return {
+      ...this.beConstruct,
+      curationParameters: { ...this.beConstruct.curationParameters },
+    };
   }
 
   /**

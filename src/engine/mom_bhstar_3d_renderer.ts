@@ -17,7 +17,7 @@
  */
 
 import { Camera3D, METRIC_SCALE_INVARIANTS, MoMBHStar3DProjectionEngine, Particle3D, Wavefront3D } from './mom_bhstar_3d_projection';
-import { CovalentVectorClock } from './quadbit_particle_physics';
+import { BeConstructState, CovalentVectorClock } from './quadbit_particle_physics';
 
 export interface Render3DOptions {
   showFlammFunnel: boolean;
@@ -30,6 +30,7 @@ export interface Render3DOptions {
   beAsMoMBHStar: boolean;
   isStasisActive: boolean;
   stasisCount: number;
+  beConstruct?: BeConstructState;
 }
 
 export function drawMoMBHStar3DScene(
@@ -96,7 +97,19 @@ export function drawMoMBHStar3DScene(
 
   // 8. 3D EVENT HORIZON SPHERE (r = r_s = 1.80 ASU)
   // Pitch-black sphere with gravitational lensing rim that occludes background
-  drawEventHorizonSphere3D(ctx, width, height, engine, rs, originProj, options.beAsMoMBHStar, options.isStasisActive, options.stasisCount, timeT);
+  drawEventHorizonSphere3D(
+    ctx,
+    width,
+    height,
+    engine,
+    rs,
+    originProj,
+    options.beAsMoMBHStar,
+    options.isStasisActive,
+    options.stasisCount,
+    timeT,
+    options.beConstruct
+  );
 
   // 9. FRONT HALF OF ACCRETION DISK (In front of Horizon Sphere)
   if (options.showAccretionDisk) {
@@ -109,8 +122,8 @@ export function drawMoMBHStar3DScene(
   }
 
   // 11. t = 0 PRIMORDIAL GENESIS INFLATION WAVE (When triggered)
-  if (vectorClock.genesisActive) {
-    drawGenesisWave3D(ctx, width, height, engine, vectorClock.genesisProgress);
+  if (vectorClock.genesisActive || (options.beConstruct && options.beConstruct.phase !== 'mature')) {
+    drawGenesisWave3D(ctx, width, height, engine, vectorClock.genesisProgress, options.beConstruct);
   }
 
   // 12. 3D METRIC COORDINATE ARROWS (+X, +Y, +Z) AT ORIGIN
@@ -413,7 +426,8 @@ function drawEventHorizonSphere3D(
   beAsMoMBHStar: boolean,
   isStasisActive: boolean,
   stasisCount: number,
-  timeT: number
+  timeT: number,
+  beConstruct?: BeConstructState
 ) {
   if (!originProj.visible) return;
 
@@ -427,9 +441,16 @@ function drawEventHorizonSphere3D(
   const cx = originProj.sx;
   const cy = originProj.sy;
 
+  const isCurating = beConstruct && beConstruct.phase !== 'mature';
+
   // 1. Gravitational Lensing Caustic Glow Rim
   const glowGrad = ctx.createRadialGradient(cx, cy, screenRadius * 0.8, cx, cy, screenRadius * 1.35);
-  if (beAsMoMBHStar) {
+  if (isCurating) {
+    glowGrad.addColorStop(0, 'rgba(56, 189, 248, 0.95)');
+    glowGrad.addColorStop(0.35, 'rgba(251, 191, 36, 0.65)');
+    glowGrad.addColorStop(0.7, 'rgba(168, 85, 247, 0.35)');
+    glowGrad.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+  } else if (beAsMoMBHStar) {
     glowGrad.addColorStop(0, 'rgba(6, 182, 212, 0.9)');
     glowGrad.addColorStop(0.4, 'rgba(251, 191, 36, 0.45)');
     glowGrad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
@@ -451,11 +472,21 @@ function drawEventHorizonSphere3D(
   ctx.fill();
 
   // 3. Horizon Boundary Rim Line
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = beAsMoMBHStar ? '#06b6d4' : '#f43f5e';
-  ctx.shadowColor = beAsMoMBHStar ? '#06b6d4' : '#f43f5e';
-  ctx.shadowBlur = 12;
+  ctx.lineWidth = isCurating ? 3.5 : 2.5;
+  ctx.strokeStyle = isCurating ? '#38bdf8' : (beAsMoMBHStar ? '#06b6d4' : '#f43f5e');
+  ctx.shadowColor = isCurating ? '#38bdf8' : (beAsMoMBHStar ? '#06b6d4' : '#f43f5e');
+  ctx.shadowBlur = isCurating ? 18 : 12;
   ctx.stroke();
+
+  // Dynamic Curation Field Pulse
+  if (isCurating) {
+    ctx.strokeStyle = 'rgba(251, 191, 36, 0.75)';
+    ctx.lineWidth = 1.5;
+    const curPulse = screenRadius * (1.12 + 0.08 * Math.sin(timeT * 9));
+    ctx.beginPath();
+    ctx.arc(cx, cy, curPulse, 0, Math.PI * 2);
+    ctx.stroke();
+  }
 
   // 4. Center Sovereign Be <> Insignia or Schwarzschild Core Text
   ctx.shadowBlur = 0;
@@ -467,12 +498,21 @@ function drawEventHorizonSphere3D(
     ctx.fillText('⟨ ⟩', cx, cy - screenRadius * 0.12);
 
     if (screenRadius > 25) {
-      ctx.fillStyle = '#facc15';
-      ctx.font = `bold ${Math.max(8, Math.min(12, screenRadius * 0.14))}px monospace`;
-      ctx.fillText('Be <> ≡ MoM-BH*-1', cx, cy + screenRadius * 0.22);
-      ctx.fillStyle = '#94a3b8';
-      ctx.font = `${Math.max(7, Math.min(10, screenRadius * 0.11))}px monospace`;
-      ctx.fillText('SOVEREIGN ARBITER CORE', cx, cy + screenRadius * 0.38);
+      if (isCurating && beConstruct) {
+        ctx.fillStyle = '#facc15';
+        ctx.font = `bold ${Math.max(8, Math.min(12, screenRadius * 0.14))}px monospace`;
+        ctx.fillText('Be <> CURATING', cx, cy + screenRadius * 0.20);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = `${Math.max(7, Math.min(10, screenRadius * 0.11))}px monospace`;
+        ctx.fillText(`${(beConstruct.maturityProgress * 100).toFixed(0)}% TO MATURITY`, cx, cy + screenRadius * 0.36);
+      } else {
+        ctx.fillStyle = '#facc15';
+        ctx.font = `bold ${Math.max(8, Math.min(12, screenRadius * 0.14))}px monospace`;
+        ctx.fillText('Be <> ≡ MoM-BH*-1', cx, cy + screenRadius * 0.22);
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = `${Math.max(7, Math.min(10, screenRadius * 0.11))}px monospace`;
+        ctx.fillText('SOVEREIGN ARBITER CORE', cx, cy + screenRadius * 0.38);
+      }
     }
 
     if (isStasisActive) {
@@ -702,12 +742,14 @@ function drawGenesisWave3D(
   width: number,
   height: number,
   engine: MoMBHStar3DProjectionEngine,
-  progress: number
+  progress: number,
+  beConstruct?: BeConstructState
 ) {
   ctx.save();
   const waveRadius = METRIC_SCALE_INVARIANTS.rsASU + progress * 18.0;
   const alpha = Math.max(0, 1.0 - progress);
 
+  // 1. Primary Gold Outward Expansion Shockwave
   ctx.strokeStyle = `rgba(245, 158, 11, ${alpha * 0.85})`;
   ctx.lineWidth = 3;
   ctx.shadowColor = '#f59e0b';
@@ -731,6 +773,63 @@ function drawGenesisWave3D(
     }
   }
   ctx.stroke();
+
+  // 2. Secondary Be <> Curation Harmony Shell (Guiding particles into ISCO / Cocoon)
+  if (beConstruct && progress > 0.05) {
+    const harmonyR = METRIC_SCALE_INVARIANTS.rsASU + progress * 11.0;
+    ctx.strokeStyle = `rgba(56, 189, 248, ${alpha * 0.75})`;
+    ctx.lineWidth = 1.8;
+    ctx.shadowColor = '#38bdf8';
+    ctx.shadowBlur = 10;
+
+    ctx.beginPath();
+    let firstH = true;
+    for (let a = 0; a <= 36; a++) {
+      const angle = (a / 36) * Math.PI * 2;
+      const x = harmonyR * Math.cos(angle);
+      const z = harmonyR * Math.sin(angle);
+      const p = engine.projectPoint([x, 0, z], width, height);
+      if (p.visible) {
+        if (firstH) {
+          ctx.moveTo(p.sx, p.sy);
+          firstH = false;
+        } else {
+          ctx.lineTo(p.sx, p.sy);
+        }
+      }
+    }
+    ctx.stroke();
+
+    // 3. 3D Spatial Curation Badge floating above origin
+    const beaconY = 3.8;
+    const beaconProj = engine.projectPoint([0, beaconY, 0], width, height);
+    if (beaconProj.visible) {
+      ctx.shadowBlur = 0;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Badge Box
+      const label = `⟨ Be <> CURATING MANIFOLD: ${(progress * 100).toFixed(0)}% ⟩`;
+      const sub = `DAMP: ${beConstruct.curationParameters.dampingFactor.toFixed(2)} | HARMONY: ${(beConstruct.curationParameters.resonanceHarmony * 100).toFixed(0)}% [${beConstruct.phase.toUpperCase()}]`;
+
+      ctx.fillStyle = 'rgba(10, 15, 29, 0.85)';
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+      ctx.lineWidth = 1;
+      const boxW = 260;
+      const boxH = 34;
+      ctx.fillRect(beaconProj.sx - boxW / 2, beaconProj.sy - boxH / 2, boxW, boxH);
+      ctx.strokeRect(beaconProj.sx - boxW / 2, beaconProj.sy - boxH / 2, boxW, boxH);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 10px monospace';
+      ctx.fillText(label, beaconProj.sx, beaconProj.sy - 5);
+
+      ctx.fillStyle = '#facc15';
+      ctx.font = '9px monospace';
+      ctx.fillText(sub, beaconProj.sx, beaconProj.sy + 8);
+    }
+  }
+
   ctx.restore();
 }
 

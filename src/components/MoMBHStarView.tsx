@@ -65,6 +65,7 @@ import {
   MoMBHStarInfiniteZoomEngine,
 } from '../engine/mom_bhstar_infinite_zoom';
 import {
+  BeConstructState,
   CovalentVectorClock,
   QUADBIT_EIGENSPACES,
   QuadbitDefinition,

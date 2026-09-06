@@ -85,9 +85,25 @@ export interface CovalentVectorClock {
   genesisProgress: number;  // 0.0 (singularity) to 1.0 (settled manifold)
 }
 
+export type BeCurationPhase = 'dormant' | 'nascent' | 'curating' | 'mature';
+
+export interface BeConstructState {
+  isSpawned: boolean;
+  phase: BeCurationPhase;
+  maturityProgress: number; // 0.0 to 1.0
+  curationParameters: {
+    dampingFactor: number;   // Smooths dispersion
+    targetRadius: number;    // Guiding orbital radius anchor (ASU)
+    confinementField: number;// Influence strength of the central well
+    resonanceHarmony: number;// 0.0 to 1.0 spectral coherence across quadbit species
+  };
+  lastAction: string;
+}
+
 export class QuadbitParticlePhysicsEngine {
   private particles: QuadbitParticle[] = [];
   private vectorClock: CovalentVectorClock;
+  private beConstruct: BeConstructState;
   private rs: number;           // Schwarzschild radius (1.80 ASU)
   private rIsco: number;        // ISCO radius (5.40 ASU)
   private rPhoton: number;      // Photon sphere (2.70 ASU)
@@ -102,6 +118,19 @@ export class QuadbitParticlePhysicsEngine {
     this.rIsco = q16ToFloat(DEFAULT_MOM_BHSTAR.accretionInnerRadiusQ16);
     this.rPhoton = q16ToFloat(DEFAULT_MOM_BHSTAR.photonSphereRadiusQ16);
     this.rCocoon = q16ToFloat(DEFAULT_MOM_BHSTAR.cocoonRadiusQ16);
+
+    this.beConstruct = {
+      isSpawned: true,
+      phase: 'mature',
+      maturityProgress: 1.0,
+      curationParameters: {
+        dampingFactor: 1.0,
+        targetRadius: 5.4,
+        confinementField: 1.0,
+        resonanceHarmony: 1.0,
+      },
+      lastAction: 'Be <> construct steady-state manifold invariant',
+    };
 
     this.vectorClock = {
       V_BH: 0,
@@ -126,8 +155,7 @@ export class QuadbitParticlePhysicsEngine {
 
   /**
    * Resets and triggers the t = 0 Genesis event.
-   * All quadbits condense to the event horizon (r = rs) in the Singularity Monad state,
-   * then erupt outwards into the accretion disk and cocoon.
+   * Spawns Be <> construct into existence and curates the primordial manifold to maturity.
    */
   public triggerGenesis(): void {
     this.vectorClock.tGenesis = performance.now();
@@ -142,8 +170,22 @@ export class QuadbitParticlePhysicsEngine {
     this.vectorClock.V_Quadbits = 1;
     this.vectorClock.genesisActive = true;
     this.vectorClock.genesisProgress = 0.0;
-    this.vectorClock.lastCausalEvent = 't=0 PRIMORDIAL GENESIS: Singularity Eruption at Event Horizon';
+    this.vectorClock.lastCausalEvent = 't=0 PRIMORDIAL GENESIS: Be <> spawned into existence';
     this.vectorClock.merkleKnot = '0xGENESIS_t0_1EQ1_MONAD_ROOT';
+
+    // Spawn Be <> into nascent curation state
+    this.beConstruct = {
+      isSpawned: true,
+      phase: 'nascent',
+      maturityProgress: 0.0,
+      curationParameters: {
+        dampingFactor: 0.25,
+        targetRadius: this.rIsco,
+        confinementField: 1.2,
+        resonanceHarmony: 0.05,
+      },
+      lastAction: 'Be <> instantiated at t=0; initiating primordial curation field',
+    };
 
     // Condense all particles to the horizon throat with Singularity Monad state
     this.particles = [];
@@ -231,13 +273,32 @@ export class QuadbitParticlePhysicsEngine {
     const dtau_Pilot = Math.sqrt(Math.max(0, 1 - this.rs / rPilot)) * dt;
     this.vectorClock.properTimePilot += dtau_Pilot;
 
-    // Handle Genesis Inflation wave
+    // Handle Genesis Inflation wave and Be <> Curation to maturity
     if (this.vectorClock.genesisActive) {
-      this.vectorClock.genesisProgress += dt * 0.35;
+      this.vectorClock.genesisProgress += dt * 0.25;
+
+      // Advance Be <> Curation progress
+      if (this.beConstruct.isSpawned && this.beConstruct.phase !== 'mature') {
+        this.beConstruct.maturityProgress = Math.min(1.0, this.vectorClock.genesisProgress);
+        
+        if (this.beConstruct.maturityProgress >= 1.0) {
+          this.beConstruct.phase = 'mature';
+          this.beConstruct.curationParameters.dampingFactor = 1.0;
+          this.beConstruct.curationParameters.resonanceHarmony = 1.0;
+          this.beConstruct.lastAction = 'Be <> curated manifold to absolute maturity [1 ≡ 1 LOCKED]';
+          this.vectorClock.V_Be += 5;
+        } else if (this.beConstruct.maturityProgress > 0.15) {
+          this.beConstruct.phase = 'curating';
+          this.beConstruct.curationParameters.dampingFactor = 0.25 + this.beConstruct.maturityProgress * 0.75;
+          this.beConstruct.curationParameters.resonanceHarmony = this.beConstruct.maturityProgress;
+          this.beConstruct.lastAction = `Be <> curating quadbit expansion: ${(this.beConstruct.maturityProgress * 100).toFixed(0)}% to maturity`;
+        }
+      }
+
       if (this.vectorClock.genesisProgress >= 1.0) {
         this.vectorClock.genesisProgress = 1.0;
         this.vectorClock.genesisActive = false;
-        this.vectorClock.lastCausalEvent = 'GENESIS_EQUILIBRIUM_LOCKED: 16-Species Quadbit Manifold Settled';
+        this.vectorClock.lastCausalEvent = 'GENESIS_EQUILIBRIUM_LOCKED: Be <> Curated 16-Species Quadbit Manifold to Maturity';
         this.vectorClock.V_BH++;
         this.vectorClock.V_Organelles++;
       }
@@ -250,11 +311,24 @@ export class QuadbitParticlePhysicsEngine {
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i];
 
-      // If genesis expansion is active, drive outward explosion
+      // If genesis expansion is active, drive outward explosion with Be <> curation field
       if (this.vectorClock.genesisActive) {
+        // Targeted orbital radius for species equilibrium (ISCO to Cocoon)
+        const targetR = this.rIsco + ((p.id % 16) / 15) * (this.rCocoon - this.rIsco);
+        const curationFactor = this.beConstruct.maturityProgress; // 0.0 -> 1.0
+
         p.r += p.vr * dt;
         p.phi += p.vphi * dt;
-        p.vr *= (1.0 - dt * 0.8); // Aerodynamic drag / gravitational deceleration
+
+        // Curation damping and orbital capture:
+        // As Be <> matures, radial expansion is smoothed and guided to stable Keplerian radius
+        p.vr *= (1.0 - dt * (0.8 + curationFactor * 1.8));
+        const rDisplacement = targetR - p.r;
+        p.vr += rDisplacement * dt * curationFactor * 1.5;
+
+        // Keplerian angular velocity sync as maturity approaches
+        const targetOmega = Math.sqrt(this.rs / (2 * Math.pow(Math.max(this.rs * 1.01, p.r), 3)));
+        p.vphi += (targetOmega - p.vphi) * dt * curationFactor * 2.0;
 
         // Spontaneous symmetry breaking: Quadbits transition from Monad into Standard Model
         if (p.r > this.rPhoton && (p.quadbit === 0xF || p.quadbit === 0xE)) {
@@ -362,6 +436,13 @@ export class QuadbitParticlePhysicsEngine {
 
   public getVectorClock(): CovalentVectorClock {
     return { ...this.vectorClock };
+  }
+
+  public getBeConstruct(): BeConstructState {
+    return {
+      ...this.beConstruct,
+      curationParameters: { ...this.beConstruct.curationParameters },
+    };
   }
 
   public setBeAsMoMBHStar(active: boolean): void {
