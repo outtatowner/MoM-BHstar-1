@@ -15,6 +15,7 @@ import {
   Radio,
   RefreshCw,
   Sliders,
+  Sparkles,
   Tv,
 } from 'lucide-react';
 import { ActiveObserver, ActiveViewMode, FramebufferMode } from '../types';
@@ -34,6 +35,8 @@ interface HeaderProps {
   onToggleOrganelles: () => void;
   showSpectroscopy: boolean;
   onToggleSpectroscopy: () => void;
+  showEpistemicTest: boolean;
+  onToggleEpistemicTest: () => void;
   fiedlerValue: string;
   lyapunovDv: string;
   merkleRoot: string;
@@ -57,6 +60,8 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleOrganelles,
   showSpectroscopy,
   onToggleSpectroscopy,
+  showEpistemicTest,
+  onToggleEpistemicTest,
   fiedlerValue,
   lyapunovDv,
   merkleRoot,
@@ -283,6 +288,21 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Layers className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">112 Organelles</span>
+        </button>
+
+        {/* Triadic Epistemic Reconciliation Experiment Toggle */}
+        <button
+          id="toggle-epistemic-test-btn"
+          onClick={onToggleEpistemicTest}
+          className={`px-2.5 py-1 rounded border font-semibold transition flex items-center gap-1.5 text-[11px] ${
+            showEpistemicTest
+              ? 'bg-cyan-950 text-cyan-300 border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.6)]'
+              : 'bg-zinc-900/70 text-cyan-400 border-cyan-900 hover:border-cyan-600 hover:bg-zinc-900'
+          }`}
+          title="Decisive Triadic Epistemic Experiment: Test O_H ≠ O_B Reconciliation without Lossy Collapse"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Epistemic Test [O_H ≠ O_B]</span>
         </button>
 
         {/* Bare-Metal C Code Inspector */}

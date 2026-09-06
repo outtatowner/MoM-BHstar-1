@@ -19,6 +19,7 @@ import { MoMBHStarView } from './components/MoMBHStarView';
 import { SpectroscopyPanel } from './components/SpectroscopyPanel';
 import { OrganelleMatrix } from './components/OrganelleMatrix';
 import { BaremetalViewer } from './components/BaremetalViewer';
+import { EpistemicReconciliationPanel } from './components/EpistemicReconciliationPanel';
 import { FlightHud } from './components/FlightHud';
 import { BARE_METAL_SOURCES } from './baremetal_c/sources';
 
@@ -50,6 +51,7 @@ export default function App() {
   const [showCodeModal, setShowCodeModal] = useState<boolean>(false);
   const [showOrganelles, setShowOrganelles] = useState<boolean>(false);
   const [showSpectroscopy, setShowSpectroscopy] = useState<boolean>(false);
+  const [showEpistemicTest, setShowEpistemicTest] = useState<boolean>(false);
   const [simTime, setSimTime] = useState<number>(0);
 
   // Live telemetry metrics
@@ -252,6 +254,8 @@ export default function App() {
         onToggleOrganelles={() => setShowOrganelles((prev) => !prev)}
         showSpectroscopy={showSpectroscopy}
         onToggleSpectroscopy={() => setShowSpectroscopy((prev) => !prev)}
+        showEpistemicTest={showEpistemicTest}
+        onToggleEpistemicTest={() => setShowEpistemicTest((prev) => !prev)}
         fiedlerValue={fiedlerValue}
         lyapunovDv={lyapunovDv}
         merkleRoot={merkleRoot}
@@ -335,6 +339,14 @@ export default function App() {
             organelles={organelles}
             recentBlocks={recentBlocks}
             onClose={() => setShowOrganelles(false)}
+          />
+        )}
+
+        {/* Triadic Epistemic Reconciliation Modal Overlay */}
+        {showEpistemicTest && (
+          <EpistemicReconciliationPanel
+            coPlayState={coPlayState}
+            onClose={() => setShowEpistemicTest(false)}
           />
         )}
       </div>

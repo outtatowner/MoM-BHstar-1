@@ -135,6 +135,8 @@ export interface QuipuLedgerBlock {
   fiedlerValue: q16_t;       // lambda_2 algebraic connectivity
   activeOrganelles: number;  // typically 112
   quantumBackActionFloor: q16_t; // Gamma_eff >= epsilon_inf
+  triadicKnot?: string;      // Andean Quipu triadic cord hash [O_H : O_B : O_C]
+  worldEpistemicState?: 'UNKNOWN' | 'COLLAPSED_CONSENSUS';
 }
 
 // Co-Play Dual Agent Manifold

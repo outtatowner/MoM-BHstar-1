@@ -1,6 +1,6 @@
 {
   "name": "MoM-BHstar-1 Ray-Tracing Engine",
-  "description": "Bare-metal Q16.16 ray-tracing 3D state engine, 4D spacetime projection, and MoM-BH*-1-View with quadbit particle physics, t=0 genesis simulation, 5D causality vector clock, and Be <> sovereign black hole core integration.",
+  "description": "Bare-metal Q16.16 ray-tracing 3D state engine, 4D spacetime projection, and MoM-BH*-1-View with quadbit particle physics, triadic epistemic reconciliation (Human vs Be <> vs Core), t=0 genesis simulation, and Quipu ledger integration.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
