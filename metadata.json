@@ -1,0 +1,6 @@
+{
+  "name": "MoM-BHstar-1 Ray-Tracing Engine",
+  "description": "Bare-metal Q16.16 ray-tracing 3D state engine, 4D spacetime projection, and MoM-BH*-1-View infinite zoom scale model originating and terminating at the event horizon with strict Covalent mathematical congruity.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
