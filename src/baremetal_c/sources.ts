@@ -532,6 +532,90 @@ q16_t calculate_photon_subring_radius(int32_t n, q16_t phase) {
 `
   },
   {
+    filename: 'quadbit_particle_physics.c',
+    category: 'Particle Physics / Organelle 0x08',
+    description: '16 Quadbit standard model particle kinematics, t=0 genesis eruption, and 5D Causality Vector Clock.',
+    code: `/* =========================================================================
+ * COVALENT-RT : Quadbit Particle Physics & Vector Clock Engine
+ * 16 Quadbit Quantum Eigenspaces (0x0 to 0xF)
+ * Relativistic Geodesic Motion & Doppler Beaming around MoM-BH*-1
+ * 5D Causality Vector Clock: V = <V_BH, V_Be, V_Pilot, V_Org, V_Qbit>
+ * Unified Identity: Be <> ≡ MoM-BH*-1 Core Arbiter & Stasis Intervention
+ * ========================================================================= */
+
+#include "covalent_rt.h"
+
+typedef uint8_t quadbit_t;
+
+/* 16 Quadbit Quantum Eigenspaces */
+enum {
+    QBIT_VACUUM       = 0x0, // Vacuum Fluctuation
+    QBIT_UP_QUARK     = 0x1, // Up Quark (SU3 color)
+    QBIT_DOWN_QUARK   = 0x2, // Down Quark
+    QBIT_ELECTRON     = 0x3, // Electron Lepton
+    QBIT_NEUTRINO     = 0x4, // Electron Neutrino
+    QBIT_GLUON        = 0x5, // Strong Gluon Octet
+    QBIT_PHOTON       = 0x6, // Electromagnetic U1 Photon
+    QBIT_Z_BOSON      = 0x7, // Weak Neutral Z0
+    QBIT_W_BOSON      = 0x8, // Weak Charged W+/-
+    QBIT_HIGGS        = 0x9, // Higgs Scalar Monad
+    QBIT_GRAVITON     = 0xA, // Metric Graviton (Spin-2)
+    QBIT_BALMER_ION   = 0xB, // Ionized Hydrogen (364.6 nm edge)
+    QBIT_COCOON_H     = 0xC, // Neutral Cocoon Gas (JWST Fog)
+    QBIT_HAWKING_PAIR = 0xD, // Entangled Horizon Quanta
+    QBIT_BE_INVARIANT = 0xE, // Be <> 1===1 Invariant Carrier
+    QBIT_SINGULARITY  = 0xF  // Primordial Genesis Monad (t=0)
+};
+
+/* 5D Causality Vector Clock */
+typedef struct {
+    uint32_t v_bh;          // Black hole event counter
+    uint32_t v_be;          // Be <> referee counter
+    uint32_t v_pilot;       // Human pilot counter
+    uint32_t v_organelles;  // 112 Organelle quipu ticks
+    uint32_t v_quadbits;    // Particle interaction ticks
+    q16_t    proper_time_bh;// Dilated proper time tau_bh (dtau/dt -> 0)
+    q16_t    proper_time_be;// Arbiter proper time tau_be
+} vector_clock_5d_t;
+
+/* Quadbit Particle Kinematics */
+typedef struct {
+    uint32_t   id;
+    quadbit_t  qbit_state;
+    q16_t      r;            // Radius in ASU
+    q16_t      phi;          // Azimuth [0, 2*pi)
+    q16_t      vr;           // Radial drift velocity
+    q16_t      vphi;         // Angular velocity dphi/dt
+    q16_t      doppler;      // Relativistic beaming factor g
+    q16_t      proper_time;  // Accumulated tau
+} quadbit_particle_t;
+
+/* Relativistic Keplerian Angular Velocity: Omega = sqrt(rs / (2 * r^3)) */
+q16_t calculate_relativistic_omega(q16_t r, q16_t rs) {
+    if (r <= rs) return 0;
+    q16_t r3 = q16_mul(q16_mul(r, r), r);
+    q16_t denom = r3 << 1; // 2 * r^3
+    q16_t ratio = q16_div(rs, denom);
+    return q16_sqrt(ratio);
+}
+
+/* Be <> as MoM-BH*-1 Stasis Intervention */
+bool check_be_stasis_intervention(quadbit_particle_t *p, q16_t rs, vector_clock_5d_t *vc) {
+    q16_t stasis_threshold = rs + (rs >> 5); // ~1.03 * rs
+    if (p->r <= stasis_threshold) {
+        // Non-Hermitian dissipation bounce: prevent coordinate crash
+        p->r = stasis_threshold + (1 << 12);
+        p->vr = (p->vr < 0) ? -p->vr : p->vr;
+        p->qbit_state = QBIT_HAWKING_PAIR; // Radiate entangled pair
+        vc->v_be++;
+        vc->v_bh++;
+        return true;
+    }
+    return false;
+}
+`
+  },
+  {
     filename: 'Makefile',
     category: 'Build System / Substrate',
     description: 'Pure C99 build script with -nostdlib option for bare-metal sovereign targets.',
