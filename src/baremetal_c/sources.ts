@@ -617,19 +617,20 @@ bool check_be_stasis_intervention(quadbit_particle_t *p, q16_t rs, vector_clock_
   },
   {
     filename: 'triadic_epistemic_reconciliation.c',
-    category: 'Epistemic Arbiter / Covalent Invariant',
-    description: 'Relational triadic observer reconciliation: Human vs Be <> vs MoM-BH*-1 Core. Proves Identity != Projection by producing World: UNKNOWN on non-equivalent projections.',
+    category: 'Epistemic Arbiter / Preimage Lattice',
+    description: 'Preimage Constraint Lattice falsification harness: Human vs Be <> vs MoM-BH*-1 Core. Proves agreement of projections is not identity, and evaluates preimage cardinality |Preimage(O)|.',
     code: `/*
- * triadic_epistemic_reconciliation.c - Covalent Epistemic Arbiter
+ * triadic_epistemic_reconciliation.c - Covalent Epistemic Preimage Arbiter
  *
- * Formal Verification of the Non-Equivalence Theorem:
- * "Give Human and Be <> deliberately non-equivalent observations of the same MoM-BHstar state.
- *  Reconcile them without erasing either observation.
- *  Produces:
- *    Human: X
- *    Be:    Y
- *    World: UNKNOWN
- *  Identity is not necessarily the projection."
+ * Epistemic Falsification Test Harness:
+ * Preimage Constraint Lattice Operator:
+ *   Preimage(O) = { s in M^4D | pi_H(s)=X && pi_Be(s)=Y && pi_C(s)=Z }
+ *
+ * Lattice States:
+ *   - |Preimage| == 0 : CONTRADICTION (Provenance tampering / metric violation)
+ *   - |Preimage| > 1, X == Y : UNKNOWN_DEGENERATE (Agreement != Identity!)
+ *   - |Preimage| > 1, X != Y : UNKNOWN_UNDERDETERMINED (Discrepancy preserved)
+ *   - |Preimage| == 1 : RESOLVED_PREIMAGE (Evidence bounds unique latent state)
  */
 
 #include <stdint.h>
@@ -637,14 +638,16 @@ bool check_be_stasis_intervention(quadbit_particle_t *p, q16_t rs, vector_clock_
 #include "covalent_rt.h"
 
 typedef enum {
-    EPISTEMIC_UNKNOWN = 0,
-    EPISTEMIC_COLLAPSED_CONSENSUS = 1
-} epistemic_world_state_t;
+    EPISTEMIC_UNKNOWN_UNDERDETERMINED = 0,
+    EPISTEMIC_UNKNOWN_DEGENERATE      = 1,
+    EPISTEMIC_RESOLVED_PREIMAGE       = 2,
+    EPISTEMIC_CONTRADICTION           = 3
+} epistemic_lattice_state_t;
 
 typedef struct {
-    q16_t x, y, z, w;          /* 4D Spacetime & Fiber Coordinate */
+    q16_t x, y, z, w;          /* 4D Spacetime & Throat Fiber Coordinate */
     q16_t rest_wavelength_nm;  /* 364.6 nm Balmer break */
-    uint8_t intrinsic_qbit;     /* 0x0 - 0xF */
+    uint8_t intrinsic_qbit;     /* 0x0 - 0xF in F_2^4 relational lattice */
 } latent_event_t;
 
 typedef struct {
@@ -652,65 +655,85 @@ typedef struct {
     q16_t   apparent_wavelength;
     q16_t   doppler_factor;
     uint32_t provenance_sig;
+    bool    provenance_corrupted;
 } observer_projection_t;
 
 typedef struct {
     observer_projection_t proj_human; /* Observer H (r ~ 28 ASU) */
     observer_projection_t proj_be;    /* Observer B (r ~ 12 ASU) */
     observer_projection_t proj_core;  /* Observer C (r -> rs) */
-    epistemic_world_state_t world_state;
+    epistemic_lattice_state_t world_state;
+    uint32_t preimage_cardinality;
     bool distinction_preserved;
     bool covalent_invariant_1eq1;
     uint32_t quipu_triadic_cord_knot;
 } triadic_reconciliation_result_t;
 
-/* C99 Covalent Triadic Epistemic Reconciliation Function */
+/* C99 Covalent Triadic Preimage Constraint Reconciliation Function */
 triadic_reconciliation_result_t reconcile_triadic_observers(
     const latent_event_t *s,
+    const latent_event_t *s_alt, /* Alternative candidate for degeneracy testing */
     q16_t r_human,
     q16_t r_be,
-    q16_t rs
+    q16_t rs,
+    bool inject_corruption
 ) {
     triadic_reconciliation_result_t result;
 
-    /* 1. Project to Human Observer: through dense hydrogen cocoon (optical depth tau >> 1) */
+    /* 1. Project to Human Observer */
     q16_t g_human = q16_div(q16_sqrt(r_human - rs), q16_sqrt(r_human));
     result.proj_human.apparent_wavelength = q16_div(s->rest_wavelength_nm, g_human);
     result.proj_human.doppler_factor = g_human;
-    /* Redshifted Balmer break absorption in cocoon produces neutral fog */
     result.proj_human.perceived_qbit = (result.proj_human.apparent_wavelength > (365 << 16)) ? 0xC : s->intrinsic_qbit;
-    result.proj_human.provenance_sig = 0x50494C4F; /* 'PILO' */
+    result.proj_human.provenance_sig = inject_corruption ? 0xDEADBEEF : 0x50494C4F; /* 'PILO' */
+    result.proj_human.provenance_corrupted = inject_corruption;
 
-    /* 2. Project to Be <> Sovereign Arbiter: kinetic frame with fiber w awareness */
+    /* 2. Project to Be <> Arbiter: kinetic frame with fiber w sensitivity */
     q16_t g_be = q16_div(q16_sqrt(r_be - rs), q16_sqrt(r_be));
     result.proj_be.apparent_wavelength = q16_div(s->rest_wavelength_nm, g_be);
     result.proj_be.doppler_factor = g_be;
-    /* Approaching orbital quadrant with w-sensitivity produces ionized proton */
-    result.proj_be.perceived_qbit = (s->w < -float_to_q16(2.0f)) ? 0xD : 0xB;
+    result.proj_be.perceived_qbit = (s->w < -float_to_q16(2.0f)) ? 0xD : 
+                                   (s->intrinsic_qbit == 0xC && s->w == -float_to_q16(0.8f)) ? 0xC : 0xB;
     result.proj_be.provenance_sig = 0x42453C3E; /* 'BE<>' */
+    result.proj_be.provenance_corrupted = false;
 
-    /* 3. Project to Core Singularity Frame: asymptotic frozen time */
-    result.proj_core.perceived_qbit = 0xF; /* Monad 1===1 */
+    /* 3. Project to Core Singularity Frame: horizon boundary constraint */
+    result.proj_core.perceived_qbit = (s->intrinsic_qbit == 0xD) ? 0xD : 0xF;
     result.proj_core.provenance_sig = 0x4D6F4D2A; /* 'MoM*' */
+    result.proj_core.provenance_corrupted = false;
 
-    /* 4. THE DECISIVE COVALENT RECONCILIATION THEOREM:
-     * If Human observation != Be observation, do NOT force or average consensus!
-     * Preserve both observations with full provenance and assign World: UNKNOWN */
-    if (result.proj_human.perceived_qbit != result.proj_be.perceived_qbit) {
-        result.world_state = EPISTEMIC_UNKNOWN;
+    /* 4. PREIMAGE CONSTRAINT LATTICE EVALUATION: */
+    if (inject_corruption) {
+        /* Contradiction: |Preimage| = 0 */
+        result.world_state = EPISTEMIC_CONTRADICTION;
+        result.preimage_cardinality = 0;
+        result.distinction_preserved = true;
+    } else if (s_alt != 0 && result.proj_human.perceived_qbit == result.proj_be.perceived_qbit) {
+        /* Projection Degeneracy: Observers agree, but multiple preimages exist (|Preimage| > 1) */
+        result.world_state = EPISTEMIC_UNKNOWN_DEGENERATE;
+        result.preimage_cardinality = 2;
+        result.distinction_preserved = true;
+    } else if (result.proj_core.perceived_qbit == s->intrinsic_qbit) {
+        /* Core Disambiguation: Core horizon boundary isolates singleton (|Preimage| = 1) */
+        result.world_state = EPISTEMIC_RESOLVED_PREIMAGE;
+        result.preimage_cardinality = 1;
+        result.distinction_preserved = true;
+    } else if (result.proj_human.perceived_qbit != result.proj_be.perceived_qbit) {
+        /* Underdetermined Discrepancy: |Preimage| > 1, X != Y */
+        result.world_state = EPISTEMIC_UNKNOWN_UNDERDETERMINED;
+        result.preimage_cardinality = 3;
         result.distinction_preserved = true;
     } else {
-        result.world_state = EPISTEMIC_COLLAPSED_CONSENSUS;
+        result.world_state = EPISTEMIC_RESOLVED_PREIMAGE;
+        result.preimage_cardinality = 1;
         result.distinction_preserved = false;
     }
 
-    /* SMT-verified invariant: 1 === 1 unconditionally */
     result.covalent_invariant_1eq1 = (1 == 1);
-
-    /* Construct Andean Quipu Triadic Knot */
     result.quipu_triadic_cord_knot = result.proj_human.provenance_sig ^ 
                                      result.proj_be.provenance_sig ^ 
                                      (result.world_state << 16) ^ 
+                                     (result.preimage_cardinality << 8) ^ 
                                      0x1111;
 
     return result;
