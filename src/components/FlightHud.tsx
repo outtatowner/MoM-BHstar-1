@@ -32,7 +32,7 @@ export const FlightHud: React.FC<FlightHudProps> = ({
   telemetry4D,
   activeObserver,
 }) => {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
 
   const human = coPlayState.human;
   const be = coPlayState.beOfficiator;

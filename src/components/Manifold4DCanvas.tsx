@@ -50,7 +50,7 @@ export const Manifold4DCanvas: React.FC<Manifold4DCanvasProps> = ({
     ...DEFAULT_4D_TRANSFORM,
   });
   const [autoRotate4D, setAutoRotate4D] = useState<boolean>(true);
-  const [showControls, setShowControls] = useState<boolean>(true);
+  const [showControls, setShowControls] = useState<boolean>(false);
 
   const isDraggingRef = useRef(false);
   const lastMousePosRef = useRef({ x: 0, y: 0 });

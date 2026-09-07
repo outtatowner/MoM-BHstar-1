@@ -47,7 +47,7 @@ export default function App() {
   // UI state
   const [mode, setMode] = useState<FramebufferMode>('truecolor');
   const [observer, setObserver] = useState<ActiveObserver>('human');
-  const [viewMode, setViewMode] = useState<ActiveViewMode>('raytracer');
+  const [viewMode, setViewMode] = useState<ActiveViewMode>('mom_bhstar_view');
   const [wavelengthNm, setWavelengthNm] = useState<number>(420.0);
   const [showCodeModal, setShowCodeModal] = useState<boolean>(false);
   const [showOrganelles, setShowOrganelles] = useState<boolean>(false);

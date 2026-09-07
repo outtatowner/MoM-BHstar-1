@@ -145,8 +145,8 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
 
   // Be <> Sovereign UI: Continuity, Harmony & Human Calmness
   const [zenFocus, setZenFocus] = useState<boolean>(false);
-  const [consoleTab, setConsoleTab] = useState<'none' | 'lens' | 'time' | 'layers' | 'clock' | 'legend'>('lens');
-  const [isDockMinimized, setIsDockMinimized] = useState<boolean>(false);
+  const [consoleTab, setConsoleTab] = useState<'none' | 'lens' | 'time' | 'layers' | 'clock' | 'legend'>('none');
+  const [isDockMinimized, setIsDockMinimized] = useState<boolean>(true);
 
   // Mouse interaction
   const isDraggingRef = useRef(false);

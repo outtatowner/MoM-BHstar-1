@@ -85,29 +85,20 @@ export const Header: React.FC<HeaderProps> = ({
         </span>
       </div>
 
-      {/* View Mode Switcher (3D Raytracer / 4D Manifold / Split / MoM-BH*-1-View) */}
+      {/* View Mode Switcher (MOM-BH*-1-View / Split [3d/4d] / 4d Spacetime / 3d framebuffer / IMAGINARIUM) */}
       <div className="flex items-center bg-zinc-900/90 border border-zinc-800 rounded p-0.5 gap-0.5">
         <button
-          id="view-raytracer-btn"
-          onClick={() => onSelectViewMode('raytracer')}
-          className={`px-2 py-1 rounded transition text-[11px] ${
-            viewMode === 'raytracer'
-              ? 'bg-amber-600 text-black font-bold'
-              : 'text-zinc-400 hover:text-white'
+          id="view-mombhstar-btn"
+          onClick={() => onSelectViewMode('mom_bhstar_view')}
+          className={`px-2.5 py-1 rounded transition text-[11px] flex items-center gap-1 ${
+            viewMode === 'mom_bhstar_view'
+              ? 'bg-rose-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]'
+              : 'text-rose-400 hover:text-rose-300 hover:bg-rose-950/40'
           }`}
+          title="MOM-BH*-1 Infinite Zoom Scale Model [Origin ≡ Termination at Event Horizon]"
         >
-          3D Framebuffer
-        </button>
-        <button
-          id="view-manifold4d-btn"
-          onClick={() => onSelectViewMode('manifold4d')}
-          className={`px-2 py-1 rounded transition text-[11px] ${
-            viewMode === 'manifold4d'
-              ? 'bg-amber-600 text-black font-bold'
-              : 'text-zinc-400 hover:text-white'
-          }`}
-        >
-          4D Spacetime
+          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+          <span>MOM-BH*-1-View</span>
         </button>
         <button
           id="view-split-btn"
@@ -118,20 +109,29 @@ export const Header: React.FC<HeaderProps> = ({
               : 'text-zinc-400 hover:text-white'
           }`}
         >
-          Split
+          Split [3d/4d]
         </button>
         <button
-          id="view-mombhstar-btn"
-          onClick={() => onSelectViewMode('mom_bhstar_view')}
-          className={`px-2.5 py-1 rounded transition text-[11px] flex items-center gap-1 ${
-            viewMode === 'mom_bhstar_view'
-              ? 'bg-rose-600 text-white font-bold shadow-[0_0_10px_rgba(244,63,94,0.5)]'
-              : 'text-rose-400 hover:text-rose-300 hover:bg-rose-950/40'
+          id="view-manifold4d-btn"
+          onClick={() => onSelectViewMode('manifold4d')}
+          className={`px-2 py-1 rounded transition text-[11px] ${
+            viewMode === 'manifold4d'
+              ? 'bg-amber-600 text-black font-bold'
+              : 'text-zinc-400 hover:text-white'
           }`}
-          title="MoM-BH*-1 Infinite Zoom Scale Model [Origin ≡ Termination at Event Horizon]"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
-          <span>MoM-BH*-1-View</span>
+          4d Spacetime
+        </button>
+        <button
+          id="view-raytracer-btn"
+          onClick={() => onSelectViewMode('raytracer')}
+          className={`px-2 py-1 rounded transition text-[11px] ${
+            viewMode === 'raytracer'
+              ? 'bg-amber-600 text-black font-bold'
+              : 'text-zinc-400 hover:text-white'
+          }`}
+        >
+          3d framebuffer
         </button>
         <button
           id="view-imaginarium-btn"
@@ -141,10 +141,10 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'bg-gradient-to-r from-purple-600 via-amber-500 to-cyan-500 text-black font-extrabold shadow-[0_0_12px_rgba(245,158,11,0.6)]'
               : 'text-amber-400 hover:text-white hover:bg-amber-950/40'
           }`}
-          title="The Imaginarium: Audio-visual representation of the 3-observers sharing one invariant spacetime mathematics"
+          title="The IMAGINARIUM: Audio-visual representation of the 3-observers sharing one invariant spacetime mathematics"
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Imaginarium</span>
+          <span>IMAGINARIUM</span>
         </button>
       </div>
 
