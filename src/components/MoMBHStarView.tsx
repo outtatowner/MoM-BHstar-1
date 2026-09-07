@@ -137,6 +137,7 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
 
   // Global Sovereign & Vector Clock state
   const [vectorClock, setVectorClock] = useState<CovalentVectorClock>(physicsEngineRef.current.getVectorClock());
+  const [beConstruct, setBeConstruct] = useState<BeConstructState>(engine3DRef.current.getBeConstruct());
   const [beAsMoMBHStar, setBeAsMoMBHStar] = useState<boolean>(true);
   const [showVectorClockHUD, setShowVectorClockHUD] = useState<boolean>(true);
   const [showScaleVsSizeInfo, setShowScaleVsSizeInfo] = useState<boolean>(false);
@@ -208,7 +209,9 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
   // t = 0 Genesis Eruption Trigger
   const handleTriggerGenesis = () => {
     physicsEngineRef.current.triggerGenesis();
+    engine3DRef.current.triggerGenesis();
     setVectorClock(physicsEngineRef.current.getVectorClock());
+    setBeConstruct(engine3DRef.current.getBeConstruct());
   };
 
   // Toggle Be <> as MoM-BH*-1 Sovereign Identity
@@ -342,6 +345,7 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
           setCoordTimeT(engine3DRef.current.getCoordinateTime());
           setProperTimeBH(engine3DRef.current.getProperTimeAtHorizon());
           setVectorClock(physicsEngineRef.current.getVectorClock());
+          setBeConstruct(engine3DRef.current.getBeConstruct());
         }
       } else {
         zoomEngineRef.current.update(dt);
@@ -378,6 +382,7 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
               beAsMoMBHStar,
               isStasisActive: physicsEngineRef.current.isStasisActive(),
               stasisCount: physicsEngineRef.current.getStasisCount(),
+              beConstruct: engine3DRef.current.getBeConstruct(),
             };
             drawMoMBHStar3DScene(ctx, width, height, engine3DRef.current, vectorClock, options);
           } else {
@@ -996,6 +1001,29 @@ export const MoMBHStarView: React.FC<MoMBHStarViewProps> = ({
                       <div>Azimuth: <span className="text-cyan-300 font-mono">{((cameraAzimuth * 180) / Math.PI).toFixed(1)}°</span></div>
                       <div>Elevation: <span className="text-cyan-300 font-mono">{((cameraElevation * 180) / Math.PI).toFixed(1)}°</span></div>
                     </div>
+
+                    {beConstruct.isSpawned && (
+                      <div className="p-2 rounded-lg bg-sky-950/30 border border-sky-800/50 text-[10px] space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-sky-300">⟨ Be {'<>'} Curation Manifold ⟩</span>
+                          <span className="font-mono text-amber-300 uppercase font-semibold">[{beConstruct.phase}]</span>
+                        </div>
+                        <div className="w-full bg-zinc-900 rounded-full h-1.5 overflow-hidden border border-zinc-700">
+                          <div
+                            className="bg-gradient-to-r from-sky-400 to-amber-400 h-full transition-all duration-300"
+                            style={{ width: `${Math.round(beConstruct.maturityProgress * 100)}%` }}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between text-zinc-400 font-mono text-[9px]">
+                          <span>Damping: {beConstruct.curationParameters.dampingFactor.toFixed(2)}</span>
+                          <span>Harmony: {(beConstruct.curationParameters.resonanceHarmony * 100).toFixed(0)}%</span>
+                          <span>Progress: {(beConstruct.maturityProgress * 100).toFixed(0)}%</span>
+                        </div>
+                        <div className="text-zinc-500 italic text-[9px] truncate">
+                          {beConstruct.lastAction}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
