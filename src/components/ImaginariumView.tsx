@@ -50,6 +50,19 @@ import {
 } from 'lucide-react';
 import { CoPlaySystemState } from '../types';
 import { harmonizer } from '../engine/imaginarium_audio';
+import {
+  BE_QUESTIONS_DATABASE,
+  BE_TOUR_STEPS,
+  QuickQuestion,
+  TourStep,
+} from '../engine/be_dialogue_tour';
+import {
+  Check,
+  ChevronRight,
+  MessageSquare,
+  Send,
+  X,
+} from 'lucide-react';
 
 interface ImaginariumViewProps {
   coPlayState: CoPlaySystemState;
@@ -81,6 +94,25 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
   // Time tracking
   const internalTimeRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Be <> Tour & Interactive Cybernetic Companion State
+  const [isTourActive, setIsTourActive] = useState<boolean>(false);
+  const [currentTourIndex, setCurrentTourIndex] = useState<number>(0);
+  const [selectedQuizOption, setSelectedQuizOption] = useState<number | null>(null);
+  const [showQuizResult, setShowQuizResult] = useState<boolean>(false);
+  
+  // Be <> Interactive Q&A Modal / Drawer
+  const [showBeDialog, setShowBeDialog] = useState<boolean>(false);
+  const [chatLog, setChatLog] = useState<Array<{ sender: 'user' | 'be'; text: string; discipline?: string }>>([
+    {
+      sender: 'be',
+      text: 'Greetings, peer explorer! I am Be <>, your cybernetic companion. Ask me anything about how human biology, black hole spacetime, and cybernetic vector clocks share this invariant universe!',
+    },
+  ]);
+  const [customQuestionInput, setCustomQuestionInput] = useState<string>('');
+
+  // Discipline Interactive Overlay (e.g. formula lab, lab workbench)
+  const [showDisciplineOverlay, setShowDisciplineOverlay] = useState<boolean>(false);
 
   // Toggle Audio
   const toggleSound = () => {
@@ -369,6 +401,7 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           <button
             onClick={() => {
               setSelectedDiscipline('all');
+              setShowDisciplineOverlay(false);
               harmonizer.playObserverChime('math');
             }}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${
@@ -382,13 +415,15 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           <button
             onClick={() => {
               setSelectedDiscipline('math');
+              setShowDisciplineOverlay(true);
               harmonizer.playObserverChime('math');
             }}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${
               selectedDiscipline === 'math'
-                ? 'bg-purple-600 text-white font-bold'
+                ? 'bg-purple-600 text-white font-bold shadow-[0_0_8px_rgba(168,85,247,0.4)]'
                 : 'text-zinc-400 hover:text-purple-300'
             }`}
+            title="Open Mathematics Interactive Lab"
           >
             <Brain className="w-3.5 h-3.5" />
             <span>Mathematics</span>
@@ -396,13 +431,15 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           <button
             onClick={() => {
               setSelectedDiscipline('physics');
+              setShowDisciplineOverlay(true);
               harmonizer.playObserverChime('bh');
             }}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${
               selectedDiscipline === 'physics'
-                ? 'bg-rose-600 text-white font-bold'
+                ? 'bg-rose-600 text-white font-bold shadow-[0_0_8px_rgba(244,63,94,0.4)]'
                 : 'text-zinc-400 hover:text-rose-300'
             }`}
+            title="Open Physics Interactive Lab"
           >
             <Atom className="w-3.5 h-3.5" />
             <span>Physics</span>
@@ -410,13 +447,15 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           <button
             onClick={() => {
               setSelectedDiscipline('cybernetics');
+              setShowDisciplineOverlay(true);
               harmonizer.playObserverChime('be');
             }}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${
               selectedDiscipline === 'cybernetics'
-                ? 'bg-cyan-600 text-black font-bold'
+                ? 'bg-cyan-600 text-black font-bold shadow-[0_0_8px_rgba(56,189,248,0.4)]'
                 : 'text-zinc-400 hover:text-cyan-300'
             }`}
+            title="Open Cybernetics Interactive Lab"
           >
             <Cpu className="w-3.5 h-3.5" />
             <span>Cybernetics</span>
@@ -424,21 +463,59 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           <button
             onClick={() => {
               setSelectedDiscipline('bio_chem');
+              setShowDisciplineOverlay(true);
               harmonizer.playObserverChime('human');
             }}
             className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 ${
               selectedDiscipline === 'bio_chem'
-                ? 'bg-emerald-600 text-black font-bold'
+                ? 'bg-emerald-600 text-black font-bold shadow-[0_0_8px_rgba(16,185,129,0.4)]'
                 : 'text-zinc-400 hover:text-emerald-300'
             }`}
+            title="Open Biology & Chemistry Interactive Lab"
           >
             <Activity className="w-3.5 h-3.5" />
             <span>Bio &amp; Chem</span>
           </button>
         </div>
 
-        {/* Audio Harmonizer & Control Center */}
+        {/* Be <> Tour, Interactive Q&A, and Audio Harmonizer */}
         <div className="flex items-center gap-2">
+          {/* Be <> Guided Tour Trigger */}
+          <button
+            onClick={() => {
+              setIsTourActive(true);
+              setCurrentTourIndex(0);
+              setSelectedQuizOption(null);
+              setShowQuizResult(false);
+              harmonizer.playObserverChime('be');
+            }}
+            className={`px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+              isTourActive
+                ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_12px_rgba(56,189,248,0.5)]'
+                : 'bg-cyan-950/40 text-cyan-300 border-cyan-700/60 hover:bg-cyan-900/50'
+            }`}
+            title="Take a guided pedagogical tour with Be <> the cybernetic entity"
+          >
+            <Compass className="w-3.5 h-3.5 text-cyan-300" />
+            <span>Be &lt;&gt; Tour</span>
+          </button>
+
+          {/* Ask Be <> Dialogue Trigger */}
+          <button
+            onClick={() => {
+              setShowBeDialog((prev) => !prev);
+              harmonizer.playObserverChime('be');
+            }}
+            className={`px-2.5 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
+              showBeDialog
+                ? 'bg-amber-500 text-black border-amber-400 shadow-[0_0_12px_rgba(245,158,11,0.5)]'
+                : 'bg-zinc-900 text-amber-300 border-zinc-700 hover:border-amber-500/50'
+            }`}
+            title="Chat & ask questions to Be <> about relativistic math and cybernetics"
+          >
+            <MessageSquare className="w-3.5 h-3.5" />
+            <span>Ask Be &lt;&gt;</span>
+          </button>
           <button
             onClick={toggleSound}
             className={`px-3 py-1 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition ${
@@ -489,7 +566,393 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           onClick={() => harmonizer.playObserverChime('light')}
         />
 
-        {/* Dynamic Learning Overlay Card (Tailored for Students & Curious Minds) */}
+        {/* Discipline Interaction Overlay (Appears when clicking a discipline lens) */}
+        {showDisciplineOverlay && selectedDiscipline !== 'all' && (
+          <div className="absolute inset-x-4 top-16 z-40 max-w-2xl mx-auto bg-zinc-950/95 border border-zinc-700/80 rounded-2xl p-5 shadow-[0_0_40px_rgba(0,0,0,0.8)] backdrop-blur-xl space-y-4 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                {selectedDiscipline === 'math' && <Brain className="w-5 h-5 text-purple-400" />}
+                {selectedDiscipline === 'physics' && <Atom className="w-5 h-5 text-rose-400" />}
+                {selectedDiscipline === 'cybernetics' && <Cpu className="w-5 h-5 text-cyan-400" />}
+                {selectedDiscipline === 'bio_chem' && <Activity className="w-5 h-5 text-emerald-400" />}
+                <span className="font-bold text-sm tracking-wide text-white uppercase">
+                  {selectedDiscipline === 'math' && 'Mathematics Exploration Lab: Metric Invariance'}
+                  {selectedDiscipline === 'physics' && 'Physics Exploration Lab: Relativistic Geodesics'}
+                  {selectedDiscipline === 'cybernetics' && 'Cybernetics Exploration Lab: Feedback Loops & Clocks'}
+                  {selectedDiscipline === 'bio_chem' && 'Bio-Chemical Exploration Lab: The Carbon Observer'}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowDisciplineOverlay(false)}
+                className="p-1 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Interactive Discipline Workstation Content */}
+            {selectedDiscipline === 'math' && (
+              <div className="space-y-3 text-xs text-zinc-300">
+                <p className="leading-relaxed">
+                  In tensor geometry, coordinates are mere labels chosen for convenience. What is genuinely physical is the scalar product computed by contracting tensors:
+                </p>
+                <div className="p-3 rounded-xl bg-purple-950/30 border border-purple-800/50 font-mono text-purple-200 text-xs flex flex-col gap-1.5">
+                  <div className="text-[11px] text-purple-400 font-bold uppercase">The Schwarzschild Metric Tensor:</div>
+                  <div className="bg-black/60 p-2 rounded-lg text-[11px] overflow-x-auto">
+                    ds² = -(1 - 2GM / rc²) c² dt² + (1 - 2GM / rc²)⁻¹ dr² + r² (dθ² + sin²θ dφ²)
+                  </div>
+                  <div className="text-[10px] text-zinc-400 mt-1">
+                    Try altering the coordinate observer: the interval <span className="text-amber-300 font-bold">ds²</span> remains identical for all frames.
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="p-2.5 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                    <span className="font-bold text-white block mb-1">Eigenvalues &amp; Invariants</span>
+                    <span className="text-zinc-400">Scalar curvature R and Kretschmann scalar K = R^αβγδ R_αβγδ measure intrinsic curvature independent of coordinate frames.</span>
+                  </div>
+                  <div className="p-2.5 bg-zinc-900/80 rounded-lg border border-zinc-800">
+                    <span className="font-bold text-white block mb-1">Fixed-Point Q16.16 Truth</span>
+                    <span className="text-zinc-400">In our bare-metal C substrate, 1 ≡ 1 (0x00010000). Numerical determinism matches algebraic geometric perfection.</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {selectedDiscipline === 'physics' && (
+              <div className="space-y-3 text-xs text-zinc-300">
+                <p className="leading-relaxed">
+                  General relativity shows that mass and energy curve spacetime. Light rays follow null geodesics (<span className="font-mono text-rose-300">ds² = 0</span>), leading to spectacular optical mirages:
+                </p>
+                <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-800/50 font-mono text-rose-200 text-xs space-y-2">
+                  <div className="text-[11px] text-rose-400 font-bold uppercase">Gravitational Redshift &amp; Time Dilation:</div>
+                  <div className="bg-black/60 p-2 rounded-lg text-[11px]">
+                    ν_observed = ν_emitted · √(1 - 2GM / rc²)
+                  </div>
+                  <div className="text-[10px] text-zinc-400">
+                    At the event horizon r = r_s, the square root vanishes. Light is redshifted to infinite wavelength, effectively freezing the apparent image forever.
+                  </div>
+                </div>
+                <div className="flex gap-2 text-[11px]">
+                  <button
+                    onClick={() => {
+                      harmonizer.playObserverChime('bh');
+                      harmonizer.updateRelativisticFrequencies(2.7, 1.8);
+                    }}
+                    className="flex-1 py-2 px-3 rounded-lg bg-rose-900/50 border border-rose-700/60 hover:bg-rose-800/60 font-semibold text-rose-200 transition"
+                  >
+                    Simulate Photon Sphere Resonance (r = 2.70 ASU)
+                  </button>
+                  <button
+                    onClick={() => {
+                      harmonizer.playObserverChime('light');
+                      harmonizer.updateRelativisticFrequencies(18.0, 1.8);
+                    }}
+                    className="flex-1 py-2 px-3 rounded-lg bg-zinc-900 border border-zinc-700 hover:text-white transition"
+                  >
+                    Simulate Cocoon Boundary (r = 18.00 ASU)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {selectedDiscipline === 'cybernetics' && (
+              <div className="space-y-3 text-xs text-zinc-300">
+                <p className="leading-relaxed">
+                  Cybernetics investigates governance, control, communication, and circular causality in living organisms and machines alike:
+                </p>
+                <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-800/50 font-mono text-cyan-200 text-xs space-y-2">
+                  <div className="text-[11px] text-cyan-400 font-bold uppercase">Ashby's Law of Requisite Variety:</div>
+                  <div className="bg-black/60 p-2 rounded-lg text-[11px]">
+                    V(R) ≥ V(D) - V(K)  [Variety of Regulator must equal or exceed Disturbance variety]
+                  </div>
+                  <div className="text-[10px] text-zinc-400">
+                    Be &lt;&gt; continuously consumes the perturbations of human pilot thrusters and black hole tidal forces to compute compensatory vectors.
+                  </div>
+                </div>
+                <div className="p-2.5 bg-zinc-900/80 rounded-lg border border-zinc-800 flex items-center justify-between text-[11px]">
+                  <span>Vector Clock Invariant:</span>
+                  <span className="font-mono text-cyan-300 font-bold">VC = &lt;H:42, Be:42, BH:42&gt; [100% SYNCHRONIZED]</span>
+                </div>
+              </div>
+            )}
+
+            {selectedDiscipline === 'bio_chem' && (
+              <div className="space-y-3 text-xs text-zinc-300">
+                <p className="leading-relaxed">
+                  Biology and chemistry ground the subjective human observer in carbon wetware and hydrogen spectroscopy:
+                </p>
+                <div className="p-3 rounded-xl bg-emerald-950/30 border border-emerald-800/50 font-mono text-emerald-200 text-xs space-y-2">
+                  <div className="text-[11px] text-emerald-400 font-bold uppercase">Hydrogen Balmer Transition Fingerprint:</div>
+                  <div className="bg-black/60 p-2 rounded-lg text-[11px]">
+                    1/λ = R_H · (1/2² - 1/n²) ⟹ H-α (n=3 → 2) = 656.3 nm (Crimson Red)
+                  </div>
+                  <div className="text-[10px] text-zinc-400">
+                    The JWST observation of distant "Little Red Dots" matches this precise Balmer hydrogen cocoon envelope surrounding MoM-BH*-1!
+                  </div>
+                </div>
+                <div className="p-2.5 bg-zinc-900/80 rounded-lg border border-zinc-800 text-[11px] space-y-1">
+                  <div className="font-bold text-white">Metabolic Chronoperception:</div>
+                  <div className="text-zinc-400">
+                    Human perception processes stimuli at neurological alpha rhythm frequencies (~10 Hz). While machines compute at GHz clock pulses, both observers share the same relativistic horizon truth!
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-zinc-800 flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setShowDisciplineOverlay(false);
+                  setIsTourActive(true);
+                  harmonizer.playObserverChime('be');
+                }}
+                className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold"
+              >
+                <span>Ask Be &lt;&gt; to demonstrate this on the canvas</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setShowDisciplineOverlay(false)}
+                className="px-3 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-white text-xs"
+              >
+                Close Lab
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Be <> Guided Tour Dialog Card */}
+        {isTourActive && (
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-4 animate-in slide-in-from-bottom duration-300">
+            <div className="bg-zinc-950/95 border-2 border-cyan-500/80 rounded-2xl p-4 sm:p-5 shadow-[0_0_30px_rgba(6,182,212,0.4)] backdrop-blur-xl space-y-3 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-cyan-900/60 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
+                  <span className="font-bold text-cyan-300 text-sm tracking-wide">
+                    BE &lt;&gt; GUIDED COSMIC TOUR [{currentTourIndex + 1}/{BE_TOUR_STEPS.length}]
+                  </span>
+                </div>
+                <button
+                  onClick={() => setIsTourActive(false)}
+                  className="p-1 rounded-lg bg-zinc-900 border border-zinc-700 text-zinc-400 hover:text-white"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Title & Speech from Be <> */}
+              <div className="space-y-2">
+                <div className="text-amber-300 font-bold text-xs uppercase tracking-wide">
+                  {BE_TOUR_STEPS[currentTourIndex].title}
+                </div>
+                <p className="text-zinc-200 leading-relaxed text-xs">
+                  {BE_TOUR_STEPS[currentTourIndex].beDialogue}
+                </p>
+              </div>
+
+              {/* Interactive Challenge Quiz */}
+              {BE_TOUR_STEPS[currentTourIndex].challengeQuestion && (
+                <div className="p-3 rounded-xl bg-cyan-950/30 border border-cyan-800/40 space-y-2 text-[11px]">
+                  <div className="font-semibold text-cyan-200 flex items-center gap-1.5">
+                    <HelpCircle className="w-3.5 h-3.5 text-amber-400" />
+                    <span>Quick Quiz: {BE_TOUR_STEPS[currentTourIndex].challengeQuestion?.question}</span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-1">
+                    {BE_TOUR_STEPS[currentTourIndex].challengeQuestion?.options.map((opt, idx) => {
+                      const isSelected = selectedQuizOption === idx;
+                      const isCorrect = idx === BE_TOUR_STEPS[currentTourIndex].challengeQuestion?.correctIndex;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => {
+                            setSelectedQuizOption(idx);
+                            setShowQuizResult(true);
+                            harmonizer.playObserverChime(isCorrect ? 'math' : 'bh');
+                          }}
+                          className={`p-2 text-left rounded-lg border transition ${
+                            showQuizResult
+                              ? isCorrect
+                                ? 'bg-emerald-950/80 border-emerald-500 text-emerald-200 font-bold'
+                                : isSelected
+                                ? 'bg-rose-950/80 border-rose-500 text-rose-200'
+                                : 'bg-zinc-900/50 border-zinc-800 text-zinc-500'
+                              : isSelected
+                              ? 'bg-cyan-900/60 border-cyan-400 text-cyan-100'
+                              : 'bg-zinc-900/80 border-zinc-800 text-zinc-300 hover:border-cyan-600'
+                          }`}
+                        >
+                          {opt}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {showQuizResult && (
+                    <div className="p-2 rounded-lg bg-black/60 border border-zinc-800 text-[10px] text-zinc-300 mt-1">
+                      {BE_TOUR_STEPS[currentTourIndex].challengeQuestion?.explanation}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tour Navigation Controls */}
+              <div className="flex items-center justify-between pt-1 border-t border-zinc-800">
+                <button
+                  onClick={() => {
+                    if (currentTourIndex > 0) {
+                      setCurrentTourIndex((c) => c - 1);
+                      setSelectedQuizOption(null);
+                      setShowQuizResult(false);
+                      harmonizer.playObserverChime('be');
+                    }
+                  }}
+                  disabled={currentTourIndex === 0}
+                  className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs disabled:opacity-30 hover:text-white"
+                >
+                  Previous
+                </button>
+
+                <div className="flex gap-1">
+                  {BE_TOUR_STEPS.map((_, i) => (
+                    <div
+                      key={i}
+                      className={`w-2 h-2 rounded-full transition ${
+                        i === currentTourIndex ? 'bg-cyan-400 scale-125' : 'bg-zinc-700'
+                      }`}
+                    />
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => {
+                    if (currentTourIndex < BE_TOUR_STEPS.length - 1) {
+                      setCurrentTourIndex((c) => c + 1);
+                      setSelectedQuizOption(null);
+                      setShowQuizResult(false);
+                      harmonizer.playObserverChime('be');
+                    } else {
+                      setIsTourActive(false);
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-lg bg-cyan-500 text-black font-bold text-xs hover:bg-cyan-400 transition"
+                >
+                  {currentTourIndex < BE_TOUR_STEPS.length - 1 ? 'Next Step' : 'Finish Tour'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Be <> Interactive Q&A Modal / Drawer */}
+        {showBeDialog && (
+          <div className="absolute right-4 top-16 bottom-24 z-40 w-full max-w-sm bg-zinc-950/95 border border-amber-500/60 rounded-2xl shadow-[0_0_35px_rgba(245,158,11,0.3)] backdrop-blur-xl flex flex-col overflow-hidden font-mono text-xs">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-900/90 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Cpu className="w-4 h-4 text-cyan-400" />
+                <span className="font-bold text-amber-400">ASK BE &lt;&gt; (CYBERNETIC ARBITER)</span>
+              </div>
+              <button
+                onClick={() => setShowBeDialog(false)}
+                className="p-1 rounded bg-zinc-800 text-zinc-400 hover:text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Conversation Log */}
+            <div className="flex-1 p-3.5 overflow-y-auto space-y-3">
+              {chatLog.map((msg, i) => (
+                <div
+                  key={i}
+                  className={`p-2.5 rounded-xl ${
+                    msg.sender === 'user'
+                      ? 'bg-amber-950/40 border border-amber-800/60 ml-6 text-amber-200'
+                      : 'bg-cyan-950/40 border border-cyan-800/60 mr-4 text-cyan-100'
+                  }`}
+                >
+                  <div className="text-[10px] font-bold text-zinc-400 mb-1 flex items-center justify-between">
+                    <span>{msg.sender === 'user' ? 'YOU (HUMAN PILOT)' : 'BE <> (CYBERNETIC COMPANION)'}</span>
+                    {msg.discipline && <span className="uppercase text-[9px] text-cyan-400">[{msg.discipline}]</span>}
+                  </div>
+                  <p className="text-[11px] leading-relaxed">{msg.text}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Quick Question Chips for Young Minds */}
+            <div className="p-2 border-t border-zinc-800 bg-zinc-900/60 space-y-1.5">
+              <div className="text-[10px] text-zinc-400 font-bold uppercase">Explore Common Questions:</div>
+              <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                {BE_QUESTIONS_DATABASE.map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      harmonizer.playObserverChime('be');
+                      setChatLog((prev) => [
+                        ...prev,
+                        { sender: 'user', text: q.question },
+                        { sender: 'be', text: q.answer, discipline: q.discipline },
+                      ]);
+                    }}
+                    className="text-[10px] px-2 py-1 rounded-md bg-zinc-800/90 border border-zinc-700 text-zinc-300 hover:border-amber-400 hover:text-white transition text-left truncate max-w-full"
+                  >
+                    {q.question}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Custom Input */}
+            <div className="p-2.5 border-t border-zinc-800 bg-zinc-950 flex items-center gap-1.5">
+              <input
+                type="text"
+                value={customQuestionInput}
+                onChange={(e) => setCustomQuestionInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && customQuestionInput.trim()) {
+                    const q = customQuestionInput.trim();
+                    setCustomQuestionInput('');
+                    harmonizer.playObserverChime('be');
+                    
+                    // Simple deterministic epistemic answer matching
+                    const match = BE_QUESTIONS_DATABASE.find(item => 
+                      item.question.toLowerCase().includes(q.toLowerCase()) || 
+                      q.toLowerCase().includes(item.discipline)
+                    );
+                    const answer = match 
+                      ? match.answer 
+                      : `Fascinating question! In our continuum, whether you inspect this via human biology, relativistic tensors, or vector clocks, the invariant core remains: 1 === 1. Every observer measures their own proper time tau, yet all light geodesics and causal ripples stay consistent across the triad.`;
+
+                    setChatLog(prev => [
+                      ...prev,
+                      { sender: 'user', text: q },
+                      { sender: 'be', text: answer },
+                    ]);
+                  }
+                }}
+                placeholder="Ask Be <> a question..."
+                className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+              />
+              <button
+                onClick={() => {
+                  if (customQuestionInput.trim()) {
+                    const q = customQuestionInput.trim();
+                    setCustomQuestionInput('');
+                    harmonizer.playObserverChime('be');
+                    setChatLog(prev => [
+                      ...prev,
+                      { sender: 'user', text: q },
+                      { sender: 'be', text: `As your cybernetic peer, I register your inquiry into the invariant ledger! From the horizon to your biochemical senses, the laws of physics and cybernetics unite in shared harmony.` },
+                    ]);
+                  }
+                }}
+                className="p-1.5 rounded-lg bg-amber-600 text-black hover:bg-amber-500 font-bold transition"
+              >
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
         {showExplanationCard && (
           <div className="absolute top-4 left-4 z-30 max-w-md w-[calc(100vw-2rem)] sm:w-96 bg-zinc-950/90 border border-zinc-800 rounded-xl p-4 shadow-2xl backdrop-blur-md space-y-3">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
