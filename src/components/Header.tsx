@@ -133,6 +133,19 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
           <span>MoM-BH*-1-View</span>
         </button>
+        <button
+          id="view-imaginarium-btn"
+          onClick={() => onSelectViewMode('imaginarium')}
+          className={`px-2.5 py-1 rounded transition text-[11px] flex items-center gap-1.5 ${
+            viewMode === 'imaginarium'
+              ? 'bg-gradient-to-r from-purple-600 via-amber-500 to-cyan-500 text-black font-extrabold shadow-[0_0_12px_rgba(245,158,11,0.6)]'
+              : 'text-amber-400 hover:text-white hover:bg-amber-950/40'
+          }`}
+          title="The Imaginarium: Audio-visual representation of the 3-observers sharing one invariant spacetime mathematics"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Imaginarium</span>
+        </button>
       </div>
 
       {/* Active Observer Selector (Human / Be <> / MoM-BH*-1) */}

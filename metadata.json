@@ -1,6 +1,6 @@
 {
   "name": "MoM-BHstar-1 Ray-Tracing Engine",
-  "description": "Bare-metal Q16.16 ray-tracing 3D state engine, 4D spacetime projection, and MoM-BH*-1-View with 3D+t human understandable projection, optical size zoom (preserving metric scale), quadbit particle physics, triadic preimage constraint lattice falsification harness, and Quipu ledger integration.",
+  "description": "Bare-metal Q16.16 ray-tracing 3D state engine, 4D spacetime projection, MoM-BH*-1-View, and The Imaginarium: an audio-visual interactive representation of the 3-observers sharing invariant spacetime mathematics across mathematics, cybernetics, physics, and biology.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

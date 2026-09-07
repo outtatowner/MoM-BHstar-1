@@ -23,7 +23,7 @@ export interface Vector4_Q16 {
 }
 
 export type ActiveObserver = 'human' | 'be_officiator' | 'mom_bhstar';
-export type ActiveViewMode = 'raytracer' | 'manifold4d' | 'split' | 'mom_bhstar_view';
+export type ActiveViewMode = 'raytracer' | 'manifold4d' | 'split' | 'mom_bhstar_view' | 'imaginarium';
 
 // 4D Mathematical Projection Structures
 export interface Vertex4D {

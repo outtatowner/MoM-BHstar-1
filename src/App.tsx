@@ -16,6 +16,7 @@ import { Header } from './components/Header';
 import { FramebufferCanvas } from './components/FramebufferCanvas';
 import { Manifold4DCanvas } from './components/Manifold4DCanvas';
 import { MoMBHStarView } from './components/MoMBHStarView';
+import { ImaginariumView } from './components/ImaginariumView';
 import { SpectroscopyPanel } from './components/SpectroscopyPanel';
 import { OrganelleMatrix } from './components/OrganelleMatrix';
 import { BaremetalViewer } from './components/BaremetalViewer';
@@ -264,8 +265,15 @@ export default function App() {
         onResetView={handleResetView}
       />
 
-      {/* Main Viewport Area (Ray-Tracer / 4D Manifold / Split / MoM-BH*-1-View) */}
+      {/* Main Viewport Area (Ray-Tracer / 4D Manifold / Split / MoM-BH*-1-View / Imaginarium) */}
       <div className="flex-1 relative overflow-hidden flex flex-col md:flex-row">
+        {/* The Imaginarium: Audio-visual interactive 3-observer mathematical manifold */}
+        {viewMode === 'imaginarium' && (
+          <div className="w-full h-full relative">
+            <ImaginariumView coPlayState={coPlayState} simTime={simTime} />
+          </div>
+        )}
+
         {/* Dedicated MoM-BH*-1 Infinite Zoom Scale Model View */}
         {viewMode === 'mom_bhstar_view' && (
           <div className="w-full h-full relative">
@@ -316,7 +324,7 @@ export default function App() {
         )}
 
         {/* 3D+t and 4D Telemetry HUD (active in Raytracer / Manifold4D / Split views) */}
-        {viewMode !== 'mom_bhstar_view' && (
+        {viewMode !== 'mom_bhstar_view' && viewMode !== 'imaginarium' && (
           <FlightHud
             coPlayState={coPlayState}
             telemetry4D={telemetry4D}
