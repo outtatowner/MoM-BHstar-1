@@ -139,15 +139,17 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
 
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        const width = canvas.width;
-        const height = canvas.height;
-
         // Dynamic Resolution scaling
         const rect = canvas.getBoundingClientRect();
-        if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
-          canvas.width = Math.floor(rect.width);
-          canvas.height = Math.floor(rect.height);
+        const targetW = Math.max(10, Math.floor(rect.width));
+        const targetH = Math.max(10, Math.floor(rect.height));
+        if (canvas.width !== targetW || canvas.height !== targetH) {
+          canvas.width = targetW;
+          canvas.height = targetH;
         }
+
+        const width = canvas.width;
+        const height = canvas.height;
 
         // Center coordinates
         const cx = width / 2;
@@ -158,7 +160,8 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
         ctx.fillRect(0, 0, width, height);
 
         // Ambient Nebula gradients representing biological warmth + cosmic cold
-        const nebulaGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(width, height) * 0.8);
+        const maxNebulaR = Math.max(20, Math.max(width, height) * 0.8);
+        const nebulaGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, maxNebulaR);
         nebulaGrad.addColorStop(0, 'rgba(239, 68, 68, 0.08)'); // Deep crimson horizon
         nebulaGrad.addColorStop(0.3, 'rgba(147, 51, 234, 0.05)'); // Quantum violet
         nebulaGrad.addColorStop(0.6, 'rgba(14, 165, 233, 0.04)'); // Cybernetic cyan
@@ -172,9 +175,9 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
         for (let i = 0; i < starCount; i++) {
           const sx = (Math.sin(i * 19.3 + t * 0.02) * 0.5 + 0.5) * width;
           const sy = (Math.cos(i * 41.7 + t * 0.015) * 0.5 + 0.5) * height;
-          const sRadius = 0.6 + 0.6 * Math.sin(i + t * 2);
+          const sRadius = Math.max(0.2, 0.6 + 0.6 * Math.sin(i + t * 2));
           ctx.beginPath();
-          ctx.arc(sx, sy, Math.max(0.2, sRadius), 0, Math.PI * 2);
+          ctx.arc(sx, sy, sRadius, 0, Math.PI * 2);
           ctx.fill();
         }
 
@@ -207,18 +210,17 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
 
         // 4. Central Invariant MoM-BH*-1 Schwarzschild Metric Radii
         // Metric is strictly invariant: Rs = 1.80 ASU, R_ph = 2.70 ASU, R_isco = 5.40 ASU
-        const basePixelScale = Math.min(width, height) / 45; // 1 ASU = basePixelScale pixels
-        const r_s = 1.80 * basePixelScale * 2.5;
-        const r_ph = 2.70 * basePixelScale * 2.5;
-        const r_isco = 5.40 * basePixelScale * 2.5;
-        const r_cocoon = 18.0 * basePixelScale * 2.5;
+        const basePixelScale = Math.max(3, Math.min(width, height) / 45); // 1 ASU = basePixelScale pixels
+        const r_s = Math.max(4, 1.80 * basePixelScale * 2.5);
+        const r_ph = Math.max(6, 2.70 * basePixelScale * 2.5);
+        const r_isco = Math.max(10, 5.40 * basePixelScale * 2.5);
+        const r_cocoon = Math.max(25, 18.0 * basePixelScale * 2.5);
 
         // Draw Accretion Disk (Dynamic Doppler Beaming & Temperature Colors)
-        const diskCount = 45;
         for (let r = r_isco; r <= r_cocoon * 0.75; r += 2.5) {
-          const normR = (r - r_isco) / (r_cocoon * 0.75 - r_isco);
+          const normR = (r - r_isco) / Math.max(1, (r_cocoon * 0.75 - r_isco));
           ctx.beginPath();
-          ctx.ellipse(cx, cy, r, r * 0.42, -0.2, 0, Math.PI * 2);
+          ctx.ellipse(cx, cy, Math.max(1, r), Math.max(0.5, r * 0.42), -0.2, 0, Math.PI * 2);
           const hue = 30 + normR * 25; // Gold to amber
           const opacity = (1 - normR * 0.8) * 0.25;
           ctx.strokeStyle = `hsla(${hue}, 95%, 55%, ${opacity})`;
@@ -228,7 +230,7 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
 
         // Draw ISCO Orbit (Innermost Stable Circular Orbit)
         ctx.beginPath();
-        ctx.ellipse(cx, cy, r_isco, r_isco * 0.42, -0.2, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, Math.max(1, r_isco), Math.max(0.5, r_isco * 0.42), -0.2, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(234, 179, 8, 0.4)';
         ctx.setLineDash([4, 6]);
         ctx.lineWidth = 1.5;
@@ -237,39 +239,40 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
 
         // Draw Photon Sphere (Light orbits in circles)
         ctx.beginPath();
-        ctx.ellipse(cx, cy, r_ph, r_ph * 0.42, -0.2, 0, Math.PI * 2);
+        ctx.ellipse(cx, cy, Math.max(1, r_ph), Math.max(0.5, r_ph * 0.42), -0.2, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(244, 63, 94, 0.7)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
         // 5. Central Event Horizon (MoM-BH*-1 Observer 3)
         // Black disk with relativistic fiery photon rim
-        const horizonGrad = ctx.createRadialGradient(cx, cy, r_s * 0.4, cx, cy, r_s);
+        const horizonGrad = ctx.createRadialGradient(cx, cy, Math.max(1, r_s * 0.4), cx, cy, Math.max(2, r_s));
         horizonGrad.addColorStop(0, '#000000');
         horizonGrad.addColorStop(0.85, '#000000');
         horizonGrad.addColorStop(1, 'rgba(239, 68, 68, 0.9)');
         ctx.fillStyle = horizonGrad;
         ctx.beginPath();
-        ctx.arc(cx, cy, r_s, 0, Math.PI * 2);
+        ctx.arc(cx, cy, Math.max(1, r_s), 0, Math.PI * 2);
         ctx.fill();
 
         // Singularity Core Badge & Pulsing Caustic Rings
         ctx.strokeStyle = `rgba(239, 68, 68, ${0.4 + 0.3 * Math.sin(t * 3)})`;
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(cx, cy, r_s * (1 + 0.08 * Math.sin(t * 2.5)), 0, Math.PI * 2);
+        const causticR = Math.max(1, r_s * (1 + 0.08 * Math.sin(t * 2.5)));
+        ctx.arc(cx, cy, causticR, 0, Math.PI * 2);
         ctx.stroke();
 
         // 6. Observer 1: Human Pilot (Biological & Sensory Worldline)
         // Orbits at a comfortable, safe distance (e.g. 14.5 ASU)
-        const humanOrbitRadius = 13.5 * basePixelScale * 2.5;
+        const humanOrbitRadius = Math.max(20, 13.5 * basePixelScale * 2.5);
         const humanAngle = t * 0.45;
         const humanX = cx + Math.cos(humanAngle) * humanOrbitRadius;
         const humanY = cy + Math.sin(humanAngle) * humanOrbitRadius * 0.48;
 
         // Observer 2: Be <> Sovereign Arbiter (Cybernetic & Algorithmic Companion)
         // Orbits in resonant harmonic resonance (e.g. 9.5 ASU, phase shifted)
-        const beOrbitRadius = 8.5 * basePixelScale * 2.5;
+        const beOrbitRadius = Math.max(15, 8.5 * basePixelScale * 2.5);
         const beAngle = -t * 0.75 + Math.PI / 3;
         const beX = cx + Math.cos(beAngle) * beOrbitRadius;
         const beY = cy + Math.sin(beAngle) * beOrbitRadius * 0.45;
@@ -299,10 +302,11 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
           ctx.setLineDash([]);
 
           // Expanding Causal Ripple Rings
-          const rippleRadius = ((t * 40) % (humanOrbitRadius * 1.3));
+          const rippleMod = humanOrbitRadius * 1.3;
+          const rippleRadius = Math.max(0.5, ((t * 40) % Math.max(1, rippleMod)));
           ctx.beginPath();
           ctx.arc(cx, cy, rippleRadius, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(234, 179, 8, ${Math.max(0, 0.4 - rippleRadius / (humanOrbitRadius * 1.3))})`;
+          ctx.strokeStyle = `rgba(234, 179, 8, ${Math.max(0, 0.4 - rippleRadius / Math.max(1, rippleMod))})`;
           ctx.lineWidth = 1.2;
           ctx.stroke();
         }
@@ -320,7 +324,8 @@ export const ImaginariumView: React.FC<ImaginariumViewProps> = ({
         ctx.strokeStyle = 'rgba(16, 185, 129, 0.6)';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(humanX, humanY, 14 + 2 * Math.sin(t * 4), 0, Math.PI * 2);
+        const haloR = Math.max(1, 14 + 2 * Math.sin(t * 4));
+        ctx.arc(humanX, humanY, haloR, 0, Math.PI * 2);
         ctx.stroke();
 
         // Draw Be <> Node (Cybernetic Crystalline Arbiter)

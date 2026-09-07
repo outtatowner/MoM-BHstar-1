@@ -1230,7 +1230,7 @@ function drawConformalDiveScene(
   const cx = width * 0.5 + zoomState.cameraCenter[0];
   const cy = height * 0.5 + zoomState.cameraCenter[1];
   const minDim = Math.min(width, height);
-  const baseShadowRadius = minDim * 0.28;
+  const baseShadowRadius = Math.max(1, minDim * 0.28);
 
   // Render Horizon
   ctx.save();
